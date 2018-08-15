@@ -26,10 +26,10 @@ def print_json(inputjson):
 def get_current_time():
     return str(datetime.datetime.utcnow().isoformat())+'Z'
 
-def start_time_entry(workspace, description, billable="false", project=None, task=None, tags=None):
+def start_time_entry(workspace, description, billable="false", project=None, tag=None):
     start = get_current_time()
     body = {"start": start, "billable": billable, "description": description,
-            "projectId": project, "taskId": task, "tagIds": tags}
+            "projectId": project, "taskId": None, "tagIds": tag}
     r = requests.post(ENDPOINT+f'workspaces/{workspace}/timeEntries/',
             headers=headers, json=body) 
     return r.json()
@@ -50,32 +50,44 @@ def finish_time_entry(workspace):
             headers=headers, json=body)
     return r.json()
 
-"""
-@click.command()
-@click.option('--count', default=1, help='Number of greetings')
-@click.option('--name', prompt='Your name', help='The person to greet')
-def hello(count, name):
-    for x in range(count):
-        click.echo(f'Hello {name}')
-"""
-
 @click.group()
 def cli():
     pass
 
-@click.command()
-@click.argument('workspace')
+@click.command('start', short_help='start a new time entry')
+@click.argument('workspace') 
 @click.argument('description')
-def start(workspace, description):
-    print(start_time_entry(workspace, description))
+@click.option('--billable', is_flag=True, default=False)
+@click.option('--project', '-p', default=None)
+@click.option('--tag', '-g', multiple=True, help='Multiple tags permitted')
+def start(workspace, description, billable, project, tag):
+    start_time_entry(workspace, description, billable, project, list(tag))
 
-@click.command()
+@click.command('finish', short_help='finish an on-going time entry')
 @click.argument('workspace')
 def finish(workspace):
-    print(finish_time_entry(workspace))
+    finish_time_entry(workspace)
+
+
+@click.command('projects', short_help='show all projects')
+@click.argument('workspace')
+def projects(workspace):
+    data = get_projects(workspace)
+    for name in data:
+        id = data[name]
+        click.echo(f'{name}: {id}')
+
+@click.command('workspaces', short_help='show all workspaces')
+def workspaces():
+    data = get_workspaces()
+    for name in data:
+        id = data[name]
+        click.echo(f'{name}: {id}')
 
 cli.add_command(start)
 cli.add_command(finish)
+cli.add_command(projects)
+cli.add_command(workspaces)
 
 if __name__ == "__main__":
     set_api("W3NIM7B5h3SUokJc")
