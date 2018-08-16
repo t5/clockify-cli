@@ -173,6 +173,8 @@ cli.add_command(remove_entry)
 cli.add_command(add_w)
 cli.add_command(add_p)
 
-if __name__ == "__main__":
-    set_api("W3NIM7B5h3SUokJc")
+def main():
     cli(obj={})
+
+if __name__ == "__main__":
+    main()
