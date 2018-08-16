@@ -95,8 +95,8 @@ def cli(verbose):
 @click.command('start', short_help='Start a new time entry')
 @click.argument('workspace') 
 @click.argument('description')
-@click.option('--billable', is_flag=True, default=False)
-@click.option('--project', '-p', default=None)
+@click.option('--billable', is_flag=True, default=False, help="Set if entry is billable")
+@click.option('--project', '-p', default=None, help="Project ID")
 @click.option('--tag', '-g', multiple=True, help='Multiple tags permitted')
 def start(workspace, description, billable, project, tag):
     ret = start_time_entry(workspace, description, billable, project, list(tag))

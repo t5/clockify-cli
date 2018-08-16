@@ -24,8 +24,8 @@ To access the usage help for the various subcommands:
 Usage: clockify start [OPTIONS] WORKSPACE DESCRIPTION
 
 Options:
-  --billable
-  -p, --project TEXT
+  --billable          Set if entry is billable
+  -p, --project TEXT  Project ID
   -g, --tag TEXT      Multiple tags permitted
   --help              Show this message and exit.
 ```
