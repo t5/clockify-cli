@@ -1,7 +1,9 @@
 import requests, json, datetime
+import os
 import click
 
 ENDPOINT = "https://api.clockify.me/api/"
+VERBOSE = False
 headers = {"X-Api-Key": None}
 
 def set_api(api):
@@ -21,7 +23,7 @@ def get_projects(workspace):
     return {project["name"]:project["id"] for project in r.json()}
 
 def print_json(inputjson):
-    print(json.dumps(inputjson, indent=2))
+    click.echo(json.dumps(inputjson, indent=2))
 
 def get_current_time():
     return str(datetime.datetime.utcnow().isoformat())+'Z'
@@ -50,47 +52,127 @@ def finish_time_entry(workspace):
             headers=headers, json=body)
     return r.json()
 
-@click.group()
-def cli():
-    pass
+def get_time_entries(workspace):
+    r = requests.get(ENDPOINT+f'workspaces/{workspace}/timeEntries/',
+            headers=headers) 
+    return r.json()[:10]
 
-@click.command('start', short_help='start a new time entry')
+def remove_time_entry(workspace, tid):
+    r = requests.delete(ENDPOINT+f'workspaces/{workspace}/timeEntries/{tid}',
+            headers=headers) 
+    return r.json()
+
+def add_workspace(name):
+    body = {"name": name}
+    r = requests.post(ENDPOINT+f'workspaces/',
+            headers=headers, json=body)
+    return r.json()
+
+def add_project(workspace, name):
+    body = {"name": name, "clientId": "", "isPublic": "false", "estimate": None,
+            "color": None, "billable": None}
+    r = requests.post(ENDPOINT+f'workspaces/{workspace}/projects/',
+            headers=headers, json=body)
+    return r.json()
+
+@click.group()
+@click.option('--verbose', is_flag=True, help="Enable verbose output")
+def cli(verbose):
+    global VERBOSE
+    VERBOSE = verbose 
+
+    config_file = os.path.expanduser('~/.clockify.cfg')
+    if os.path.exists(config_file):
+        with open(config_file) as f:
+            api = f.read()
+            set_api(api)
+    else:
+        new = click.prompt("Your API key")
+        with open(config_file, 'w') as f:
+            f.write(new)
+        set_api(new)
+
+@click.command('start', short_help='Start a new time entry')
 @click.argument('workspace') 
 @click.argument('description')
 @click.option('--billable', is_flag=True, default=False)
 @click.option('--project', '-p', default=None)
 @click.option('--tag', '-g', multiple=True, help='Multiple tags permitted')
 def start(workspace, description, billable, project, tag):
-    start_time_entry(workspace, description, billable, project, list(tag))
+    ret = start_time_entry(workspace, description, billable, project, list(tag))
+    if VERBOSE:
+        print_json(ret)
 
-@click.command('finish', short_help='finish an on-going time entry')
+@click.command('finish', short_help='Finish an on-going time entry')
 @click.argument('workspace')
 def finish(workspace):
-    finish_time_entry(workspace)
+    ret = finish_time_entry(workspace)
+    if VERBOSE:
+        print_json(ret)
 
-
-@click.command('projects', short_help='show all projects')
+@click.command('projects', short_help='Show all projects')
 @click.argument('workspace')
 def projects(workspace):
     data = get_projects(workspace)
-    for name in data:
-        id = data[name]
-        click.echo(f'{name}: {id}')
+    if VERBOSE:
+        print_json(data)
+    else:
+        for name in data:
+            id = data[name]
+            click.echo(f'{id}: {name}')
 
-@click.command('workspaces', short_help='show all workspaces')
+@click.command('workspaces', short_help='Show all workspaces')
 def workspaces():
     data = get_workspaces()
-    for name in data:
-        id = data[name]
-        click.echo(f'{name}: {id}')
+    if VERBOSE:
+        print_json(data)
+    else:
+        for name in data:
+            id = data[name]
+            click.echo(f'{id}: {name}')
+
+@click.command('entries', short_help='Show previous 10 time entries')
+@click.argument('workspace')
+def entries(workspace):
+    data = get_time_entries(workspace)
+    if VERBOSE:
+        print_json(data)
+    else:
+        for entry in data:
+            click.echo(f'{entry["id"]}: {entry["description"]}')
+
+@click.command('remove_entry', short_help='Remove entry')
+@click.argument('workspace')
+@click.argument('time entry ID')
+def remove_entry(workspace, tid):
+    ret = remove_time_entry(workspace, tid)
+    if VERBOSE:
+        print_json(ret)
+    
+@click.command('add_workspace', short_help='Add a workspace')
+@click.argument('name')
+def add_w(name):
+    ret = add_workspace(name)
+    if VERBOSE:
+        print_json(ret)
+
+@click.command('add_project', short_help='Add a project')
+@click.argument('workspace')
+@click.argument('name')
+def add_p(workspacename):
+    ret = add_project(workspace, name)
+    if VERBOSE:
+        print_json(ret)
 
 cli.add_command(start)
 cli.add_command(finish)
 cli.add_command(projects)
 cli.add_command(workspaces)
+cli.add_command(entries)
+cli.add_command(remove_entry)
+cli.add_command(add_w)
+cli.add_command(add_p)
 
 if __name__ == "__main__":
     set_api("W3NIM7B5h3SUokJc")
-    workspaces = get_workspaces()
-    print(workspaces)
-    cli()
+    cli(obj={})
