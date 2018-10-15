@@ -33,6 +33,8 @@ Options:
 Move to the main directory that contains setup.py
 ```
 pip install -e .
+export CLOCKIFY_API_EMAIL=[your email]
+export CLOCKIFY_API_PASSWORD=[your password]
 ```
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
