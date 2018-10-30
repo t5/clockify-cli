@@ -12,7 +12,7 @@ setup(
         'chardet==3.0.4',
         'click==6.7',
         'idna==2.7',
-        'requests==2.19.1',
+        'requests>=2.20.0',
         'urllib3==1.23',
     ],
     entry_points='''
