@@ -1,9 +1,10 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='clockify_cli',
     version='0.10',
-    py_modules=['clockify_cli'],
+    # py_modules=['clockify_cli'],
+    packages=find_packages(include=['clockify_cli']),
     author='Theodore Hu',
     url='https://github.com/t5/clockify-cli',
     install_requires=[
